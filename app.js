@@ -1,5 +1,5 @@
 const API = "https://api.restcountries.com/countries/v5";
-const CAMPOS = "response_fields=names.common,capitals,region,population,flag.url_png";
+const CAMPOS = "response_fields=names.common,capitals,region,population,flag.url_png,languages, currencies";
 
 let paisesActuales = [];
 
@@ -46,6 +46,20 @@ function ordenar(paises, criterio) {
      return copia;
    }
 
+   // mostrar idiomas y monedas
+function textoIdiomas(pais) {
+  if (!Array.isArray(pais.languages) || pais.languages.length === 0) return "Sin dato";
+  return pais.languages
+    .map(i => i.name ?? i.english_name ?? i.native_name ?? "Sin dato")
+    .join(", ");
+}
+
+function textoMonedas(pais) {
+  const lista = Object.values(pais.currencies ?? {});
+  if (lista.length === 0) return "Sin dato";
+  return lista.map(m => m.name ?? m.english_name ?? "Sin dato").join(", ");
+}
+
 function mostrarPaises(paises) {
   const contenedor = document.getElementById("resultados");
   contenedor.innerHTML = "";
@@ -59,7 +73,15 @@ function mostrarPaises(paises) {
       <p><b>Capital:</b> ${pais.capitals?.length ? pais.capitals[0].name : "Sin capital"}</p>
       <p><b>Región:</b> ${pais.region}</p>
       <p><b>Población:</b> ${pais.population?.toLocaleString("es-MX") ?? "Sin dato"}</p>
+      <div class="detalle" hidden>
+        <p><b>Idiomas:</b> ${textoIdiomas(pais)}</p>
+        <p><b>Moneda:</b> ${textoMonedas(pais)}</p>
+      </div>
     `;
+    // Al hacer clic se muestra u oculta el detalle
+    tarjeta.addEventListener("click", () => {
+      tarjeta.querySelector(".detalle").toggleAttribute("hidden");
+    });
     contenedor.appendChild(tarjeta);
   });
 }

@@ -11,3 +11,6 @@ minmax(220px, 1fr)); gap: 16px; padding: 20px; }
 }
 .controles { margin-top: 12px; }
 select { padding: 8px; margin: 0 4px; }
+
+.tarjeta { cursor: pointer; }
+.detalle { margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd; }
