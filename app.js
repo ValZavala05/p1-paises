@@ -1,6 +1,8 @@
 const API = "https://api.restcountries.com/countries/v5";
 const CAMPOS = "response_fields=names.common,capitals,region,population,flag.url_png";
 
+let paisesActuales = [];
+
 async function pedirPaises(url) {
   const respuesta = await fetch(url, {
     headers: { Authorization: `Bearer ${API_KEY}` }
@@ -35,6 +37,15 @@ async function buscarRegion(region) {
   return paises;
 }
 
+ //ordenarlos
+function ordenar(paises, criterio) {
+     const copia = [...paises];
+     if (criterio === "poblacion") {
+       copia.sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
+     }
+     return copia;
+   }
+
 function mostrarPaises(paises) {
   const contenedor = document.getElementById("resultados");
   contenedor.innerHTML = "";
@@ -56,21 +67,27 @@ function mostrarPaises(paises) {
 const form = document.getElementById("formBuscar");
 const mensaje = document.getElementById("mensaje");
 const selRegion = document.getElementById("selRegion");
+ const selOrden = document.getElementById("selOrden");
+
+   function pintar() {
+     mostrarPaises(ordenar(paisesActuales, selOrden.value));
+   }
 
 // Carga paises, ya sea por nombre o por region
-async function cargar(obtener) {
-  mensaje.textContent = "Cargando...";
-  try {
-    const paises = await obtener();
-    mostrarPaises(paises);
-    mensaje.textContent = `${paises.length} resultado(s)`;
-  } catch (error) {
-    document.getElementById("resultados").innerHTML = "";
-    mensaje.textContent = error instanceof TypeError
-      ? "No hay conexión con el servidor. Revisa tu internet."
-      : error.message;
-  }
-}
+   async function cargar(obtener) {
+     mensaje.textContent = "Cargando...";
+     try {
+       paisesActuales = await obtener();
+       pintar();
+       mensaje.textContent = `${paisesActuales.length} resultado(s)`;
+     } catch (error) {
+       paisesActuales = [];
+       document.getElementById("resultados").innerHTML = "";
+       mensaje.textContent = error instanceof TypeError
+         ? "No hay conexión con el servidor. Revisa tu internet."
+         : error.message;
+     }
+   }
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -84,3 +101,4 @@ selRegion.addEventListener("change", () => {
   document.getElementById("txtPais").value = "";
   cargar(() => buscarRegion(selRegion.value));
 });
+   selOrden.addEventListener("change", pintar);
