@@ -1,8 +1,7 @@
 const API = "https://api.restcountries.com/countries/v5";
 const CAMPOS = "response_fields=names.common,capitals,region,population,flag.url_png";
 
-async function buscarPais(nombre) {
-  const url = `${API}/name?q=${encodeURIComponent(nombre)}&${CAMPOS}`;
+async function pedirPaises(url) {
   const respuesta = await fetch(url, {
     headers: { Authorization: `Bearer ${API_KEY}` }
   });
@@ -14,11 +13,26 @@ async function buscarPais(nombre) {
   }
 
   const json = await respuesta.json();
-  const paises = json.data?.objects ?? [];
+  return json.data?.objects ?? [];
+}
+
+async function buscarPais(nombre) {
+  const url = `${API}/name?q=${encodeURIComponent(nombre)}&${CAMPOS}`;
+  const paises = await pedirPaises(url);
   if (paises.length === 0) {
     throw new Error("No se encontró ningún país con ese nombre.");
   }
-  return paises; // arreglo de países
+  return paises;
+}
+
+// paises de una región
+async function buscarRegion(region) {
+  const url = `${API}/region/${encodeURIComponent(region)}?limit=100&${CAMPOS}`;
+  const paises = await pedirPaises(url);
+  if (paises.length === 0) {
+    throw new Error("No se encontraron países en esa región.");
+  }
+  return paises;
 }
 
 function mostrarPaises(paises) {
@@ -41,14 +55,13 @@ function mostrarPaises(paises) {
 
 const form = document.getElementById("formBuscar");
 const mensaje = document.getElementById("mensaje");
+const selRegion = document.getElementById("selRegion");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const nombre = document.getElementById("txtPais").value.trim();
+// Carga paises, ya sea por nombre o por region
+async function cargar(obtener) {
   mensaje.textContent = "Cargando...";
-
   try {
-    const paises = await buscarPais(nombre);
+    const paises = await obtener();
     mostrarPaises(paises);
     mensaje.textContent = `${paises.length} resultado(s)`;
   } catch (error) {
@@ -57,4 +70,17 @@ form.addEventListener("submit", async (e) => {
       ? "No hay conexión con el servidor. Revisa tu internet."
       : error.message;
   }
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  selRegion.value = "";
+  const nombre = document.getElementById("txtPais").value.trim();
+  cargar(() => buscarPais(nombre));
+});
+
+selRegion.addEventListener("change", () => {
+  if (!selRegion.value) return;
+  document.getElementById("txtPais").value = "";
+  cargar(() => buscarRegion(selRegion.value));
 });
